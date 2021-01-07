@@ -3,20 +3,31 @@
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 from os import listdir
-from os.path import isfile, join
+from os.path import isfile, join, dirname
 import pathlib
+import sys
 from PIL import Image, ImageDraw, ImageFont
 Image.MAX_IMAGE_PIXELS = None
 def get_image():
     global imageFiles
     # Use a breakpoint in the code line below to debug your script.
-    mypath = pathlib.Path().absolute()
+    if getattr(sys, 'frozen', False):
+        mypath = dirname(sys.executable)
+    elif __file__:
+        mypath = dirname(__file__)
+
     imageFiles = [f for f in listdir(mypath) if isfile(join(mypath, f))]
 
     return list(filter(lambda x: x.find('.jpg') != -1 or x.find('.png') != -1, imageFiles))
 
 def convert_pixel_to_hex(filePath):
-    image = Image.open(filePath)
+    if getattr(sys, 'frozen', False):
+        application_path = dirname(sys.executable)
+    elif __file__:
+        application_path = dirname(__file__)
+
+    full_path = join(application_path, filePath)
+    image = Image.open( full_path)
     dpi = image.info['dpi']
     width, height = image.size
     print(dpi, width, height)
@@ -35,14 +46,23 @@ def convert_pixel_to_hex(filePath):
 
 
 def drawImage(hex_list, canvasSize, filePath, pixel_per_5mm):
+    if getattr(sys, 'frozen', False):
+        application_path = dirname(sys.executable)
+    elif __file__:
+        application_path = dirname(__file__)
+
+    dir_path = join(application_path, 'hex')
+
     img = Image.new('RGB', (canvasSize[0], canvasSize[1]), color=(255, 255, 255))
-    fnt = ImageFont.truetype('NotoSans-Regular.ttf', 11)
+    font_path = join(application_path, 'NotoSans-Regular.ttf')
+    fnt = ImageFont.truetype(font_path, 11)
     d = ImageDraw.Draw(img)
     for y_idx, y_value in enumerate(hex_list):
         for x_idx, x_value in enumerate(y_value):
             d.text((round(x_idx * pixel_per_5mm + 15), round(y_idx * pixel_per_5mm + 15)), x_value, font=fnt, fill=(0, 0, 0))
-    pathlib.Path("./hex").mkdir(parents=True, exist_ok=True)
-    img.save('./hex/' + filePath )
+    pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+    full_path = join(dir_path, filePath)
+    img.save(full_path , dpi=(300,300))
 
 def rgb_to_hex(rgb):
     r, g, b = rgb

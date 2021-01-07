@@ -4,3 +4,6 @@
 hex/*.jpg
 venv
 
+build
+dist
+*.spec
